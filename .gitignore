@@ -1,6 +1,8 @@
 .vs
 .idea
 .vscode
-out
+_out
+_cmake/CPM_*.cmake
 build
 CMakeUserPresets.json
+CMakePresets.json

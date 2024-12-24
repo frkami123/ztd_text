@@ -2,13 +2,20 @@ cmake_minimum_required(VERSION 3.27)
 
 project("Eao_Detail_ztd_text" LANGUAGES CXX VERSION 0.0.1 DESCRIPTION "Eao_Detail_ztd_text")
 
+option(EAO_ZTD_TEXT_STANDALONE "Standalone and doesn't need Eao" OFF)
+
 if(PROJECT_IS_TOP_LEVEL)
-  if(NOT EXISTS ${EAO_CMAKE_MODULE_PATH})
-    message(FATAL_ERROR "Invalid EAO_CMAKE_MODULE_PATH: \"${EAO_CMAKE_MODULE_PATH}\"")
+  if(EAO_ZTD_TEXT_STANDALONE)
+    message(INFO "EAO_ZTD_TEXT Standalone mode: ON")
+    set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH})
   else()
-    set(CMAKE_MODULE_PATH ${EAO_CMAKE_MODULE_PATH} ${CMAKE_MODULE_PATH})
-    include(EaoCommon)
-    eao_cmake_policies()
+    if(NOT EXISTS ${EAO_CMAKE_MODULE_PATH})
+      message(FATAL_ERROR "Invalid EAO_CMAKE_MODULE_PATH: \"${EAO_CMAKE_MODULE_PATH}\"")
+    else()
+      set(CMAKE_MODULE_PATH ${EAO_CMAKE_MODULE_PATH} ${CMAKE_MODULE_PATH})
+      include(EaoCommon)
+      eao_cmake_policies()
+    endif()
   endif()
 endif()
 
@@ -29,6 +36,7 @@ if(NOT DEFINED ZTD_CMAKE_PROJECT_PRELUDE)
     EXCLUDE_FROM_ALL YES
   )
 endif()
+
 if(NOT DEFINED ZTD_CMAKE_PROJECT_PRELUDE)
   message(FATAL_ERROR "something")
 endif()
@@ -106,8 +114,26 @@ CPMAddPackage(
   EXCLUDE_FROM_ALL YES
 )
 
-# 
-include(ProjectOptions)
+if(NOT EAO_ZTD_TEXT_STANDALONE)
+  include(ProjectOptions)
+else()
+  macro(setup_project_options projectName targetName)
+    set_property(TARGET ${targetName} PROPERTY CXX_STANDARD 23)
+    target_compile_features(${targetName} INTERFACE cxx_std_23)
+    set_property(TARGET ${targetName} PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE ON)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+      target_compile_options(${targetName}
+        INTERFACE
+        /nologo
+        /utf-8
+        /permissive-
+        /Zc:throwingNew-
+        /Zc:preprocessor
+        /Zc:externConstexpr
+      )
+    endif()
+  endmacro()
+endif()
 
 setup_project_options(${PROJECT_NAME} ztd.version)
 setup_project_options(${PROJECT_NAME} ztd.platform)
